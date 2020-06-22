@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from abc import ABC, abstractmethod
 
 
-class Flujo:
+class Flujo(ABC):
     def __init__(self, rho):
         self.initial_condition = None
         self.rho = rho
