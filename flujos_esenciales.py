@@ -115,12 +115,6 @@ class Uniform(Flujo):
         z = self.escala_input * (x + y * 1j)
         return self.A * z * np.exp(self.alpha * 1j)
 
-    def flujo(self, x, y):
-        return np.real(self.funcion(x, y))
-
-    def potencial(self, x, y):
-        return np.imag(self.funcion(x, y))
-
     def velocidad(self, x, y):
         shape = len(x), len(y)
         vx = np.real(self.escala_input * self.A * np.cos(self.alpha))
