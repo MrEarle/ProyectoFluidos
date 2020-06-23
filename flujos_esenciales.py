@@ -48,9 +48,18 @@ class Flujo(ABC):
     def __add__(self, other):
         return Composite([self, other])
 
+    def __mul__(self, other):
+        if not isinstance(other, (int, float)):
+            raise TypeError('Cannot multiply by something thats not a number')
+
+        return Composite([self], escala=other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
+
 
 class Composite(Flujo):
-    def __init__(self, flujos, rho=1):
+    def __init__(self, flujos, escala=1, rho=1):
         super().__init__(rho)
         self.flujos = flujos
 
@@ -123,3 +132,21 @@ class VorticeIrrotacional(Flujo):
         r, theta = self.cartesian_to_polar(x - np.real(self.z0), y - np.imag(self.z0))
         v = self.A / r
         return np.real(v * -np.sin(theta)), np.real(v * np.cos(theta))
+
+
+class Doblete(Flujo):
+    def __init__(self, A, x0=(0, 0), rho=1):
+        super().__init__(rho)
+        self.A = A
+        self.z0 = complex(*x0)
+
+    def funcion(self, x, y):
+        return self.A / (x + y * 1j - self.z0)
+
+    def velocidad(self, x, y):
+        r, theta = self.cartesian_to_polar(x - np.real(self.z0), y - np.imag(self.z0))
+        vr = -self.A / (r ** 2) * np.cos(theta)
+        vt = -self.A / (r ** 2) * np.sin(theta)
+
+        vx, vy = self.polar_to_cartesian(vr, vt)
+        return np.real(vx), np.real(vy)

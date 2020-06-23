@@ -16,7 +16,7 @@ def campo_de_velocidades(x_lim, y_lim, flujo: Flujo):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    colors = 2 * np.log(np.sqrt(f_x ** 2 + f_y ** 2))
+    colors = np.log(np.sqrt(f_x ** 2 + f_y ** 2))
 
     ax.streamplot(x, y, f_x, f_y, linewidth=1, color=colors, density=1, arrowstyle='->', cmap='jet')
 
