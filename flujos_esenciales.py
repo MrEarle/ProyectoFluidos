@@ -52,38 +52,41 @@ class Flujo(ABC):
         if not isinstance(other, (int, float)):
             raise TypeError('Cannot multiply by something thats not a number')
 
-        return Composite([self], escala=other)
+        return Composite([self], escala_output=other)
 
     def __rmul__(self, other):
         return self.__mul__(other)
 
 
 class Composite(Flujo):
-    def __init__(self, flujos, escala=1, rho=1):
+    def __init__(self, flujos, escala_input=1, escala_output=1, rho=1):
         super().__init__(rho)
         self.flujos = flujos
-        self.escala = escala
+        self.escala_output = escala_output
+        self.escala_input = escala_input
 
     def funcion(self, x, y):
         res = np.full(x.shape, 0j)
         for flujo in self.flujos:
-            res += flujo.funcion(x, y)
-        return self.escala * res
+            res += flujo.funcion(self.escala_input * x, self.escala_input * y)
+        return self.escala_output * res
 
     def velocidad(self, x, y):
         v_x = np.zeros(x.shape)
         v_y = np.zeros(y.shape)
         for flujo in self.flujos:
-            v_x_i, v_y_i = flujo.velocidad(x, y)
+            v_x_i, v_y_i = flujo.velocidad(self.escala_input * x, self.escala_input * y)
             v_x += v_x_i
             v_y += v_y_i
-        return self.escala * v_x, self.escala * v_y
+        return self.escala_output * v_x, self.escala_output * v_y
 
 
 class Uniform(Flujo):
-    def __init__(self, A, direction='x', rho=1):
+    def __init__(self, A, escala_input=1, direction='x', rho=1):
         super().__init__(rho)
         self.A = A
+        self.escala_input = escala_input
+
         if direction == 'x':
             self.alpha = 0
         elif direction == 'y':
@@ -92,7 +95,8 @@ class Uniform(Flujo):
             self.alpha = complex(direction)
 
     def funcion(self, x, y):
-        return self.A * (x + y * 1j) * np.exp(self.alpha * 1j)
+        z = self.escala_input * (x + y * 1j)
+        return self.A * z * np.exp(self.alpha * 1j)
 
     def flujo(self, x, y):
         return np.real(self.funcion(x, y))
@@ -102,52 +106,69 @@ class Uniform(Flujo):
 
     def velocidad(self, x, y):
         shape = len(x), len(y)
-        return np.full(shape, np.real(self.A * np.cos(self.alpha))), np.full(shape, np.real(self.A * np.sin(self.alpha)))
+        vx = np.real(self.escala_input * self.A * np.cos(self.alpha))
+        vy = np.real(self.escala_input * self.A * np.sin(self.alpha))
+        return np.full(shape, vx), np.full(shape, vy)
 
 
 class Fuente(Flujo):
-    def __init__(self, A, x0=(0, 0), rho=1):
+    def __init__(self, A, x0=(0, 0), escala_input=1, rho=1):
         super().__init__(rho)
         self.A = A
         self.z0 = complex(*x0)
+        self.escala_input = escala_input
 
     def funcion(self, x, y):
-        return self.A * np.log(x + y * 1j - self.z0)
+        z = self.escala_input * (x + y * 1j)
+        return self.A * np.log(z - self.z0)
 
     def velocidad(self, x, y):
+        x = self.escala_input * x
+        y = self.escala_input * y
         r, theta = self.cartesian_to_polar(x - np.real(self.z0), y - np.imag(self.z0))
-        v = self.A / r
-        return np.real(v * np.cos(theta)), np.real(v * np.sin(theta))
+        vr = self.escala_input * self.A / r
+        vt = 0
+
+        vx = vr * np.cos(theta) - vt * np.sin(theta)
+        vy = vr * np.sin(theta) + vt * np.cos(theta)
+        return np.real(vx), np.real(vy)
 
 
 class VorticeIrrotacional(Flujo):
-    def __init__(self, A, x0=(0, 0), rho=1):
+    def __init__(self, A, x0=(0, 0), escala_input=1, rho=1):
         super().__init__(rho)
         self.A = A
         self.z0 = complex(*x0)
+        self.escala_input = escala_input
 
     def funcion(self, x, y):
-        return -1j * self.A * np.log(x + y * 1j - self.z0)
+        z = self.escala_input * (x + y * 1j)
+        return -1j * self.A * np.log(z - self.z0)
 
     def velocidad(self, x, y):
+        x = self.escala_input * x
+        y = self.escala_input * y
         r, theta = self.cartesian_to_polar(x - np.real(self.z0), y - np.imag(self.z0))
-        v = self.A / r
+        v = self.escala_input * self.A / r
         return np.real(v * -np.sin(theta)), np.real(v * np.cos(theta))
 
 
 class Doblete(Flujo):
-    def __init__(self, A, x0=(0, 0), rho=1):
+    def __init__(self, A, x0=(0, 0), escala_input=1, rho=1):
         super().__init__(rho)
         self.A = A
         self.z0 = complex(*x0)
+        self.escala_input = escala_input
 
     def funcion(self, x, y):
-        return self.A / (x + y * 1j - self.z0)
+        z = self.escala_input * (x + y * 1j)
+        return self.A / (z - self.z0)
 
     def velocidad(self, x, y):
         r, theta = self.cartesian_to_polar(x - np.real(self.z0), y - np.imag(self.z0))
-        vr = -self.A / (r ** 2) * np.cos(theta)
-        vt = -self.A / (r ** 2) * np.sin(theta)
+        vr = -self.A / (r ** 2) * np.cos(theta) * (1 / self.escala_input)
+        vt = -self.A / (r ** 2) * np.sin(theta) * (1 / self.escala_input)
 
-        vx, vy = self.polar_to_cartesian(vr, vt)
+        vx = vr * np.cos(theta) - vt * np.sin(theta)
+        vy = vr * np.sin(theta) + vt * np.cos(theta)
         return np.real(vx), np.real(vy)

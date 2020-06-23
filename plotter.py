@@ -3,9 +3,13 @@ import matplotlib.pyplot as plt
 from flujos_esenciales import Flujo
 
 
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+
 def campo_de_velocidades(x_lim, y_lim, flujo: Flujo):
-    nx = 5 * (x_lim[1] - x_lim[0])
-    ny = 5 * (y_lim[1] - y_lim[0])
+    nx = 64
+    ny = 64
     x = np.linspace(*x_lim, nx)
     y = np.linspace(*y_lim, ny)
 
@@ -13,12 +17,16 @@ def campo_de_velocidades(x_lim, y_lim, flujo: Flujo):
 
     f_x, f_y = flujo.velocidad(X, Y)
 
+    # f_x = f_x / np.hypot(f_x, f_y)
+    # f_y = f_y / np.hypot(f_x, f_y)
+
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    colors = np.log(np.sqrt(f_x ** 2 + f_y ** 2))
+    colors = sigmoid(np.hypot(f_x, f_y) / 50)
 
-    ax.streamplot(x, y, f_x, f_y, linewidth=1, color=colors, density=1, arrowstyle='->', cmap='jet')
+    # ax.quiver(x, y, f_x, f_y, colors, scale=64, linewidth=1, cmap='jet', pivot='mid')
+    ax.streamplot(x, y, f_x, f_y, color=colors, cmap='jet', density=2)
 
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$')
@@ -33,7 +41,7 @@ def contour(x, y, z, title='', units=None):
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
-    cp = ax.contourf(x, y, z, levels=levels)
+    cp = ax.contourf(x, y, z, cmap='jet', levels=levels)
     clb = fig.colorbar(cp)  # Add a colorbar to a plot
     if units is not None:
         clb.ax.set_title(units)
@@ -46,8 +54,8 @@ def contour(x, y, z, title='', units=None):
 
 
 def lineas_de_corriente(x_lim, y_lim, flujo: Flujo):
-    nx = 5 * (x_lim[1] - x_lim[0])
-    ny = 5 * (y_lim[1] - y_lim[0])
+    nx = 100
+    ny = 100
     x = np.linspace(*x_lim, nx)
     y = np.linspace(*y_lim, ny)
 
