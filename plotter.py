@@ -17,16 +17,13 @@ def campo_de_velocidades(x_lim, y_lim, flujo: Flujo):
 
     f_x, f_y = flujo.velocidad(X, Y)
 
-    # f_x = f_x / np.hypot(f_x, f_y)
-    # f_y = f_y / np.hypot(f_x, f_y)
-
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     colors = sigmoid(np.hypot(f_x, f_y) / 50)
 
     # ax.quiver(x, y, f_x, f_y, colors, scale=64, linewidth=1, cmap='jet', pivot='mid')
-    ax.streamplot(x, y, f_x, f_y, color=colors, cmap='jet', density=2)
+    ax.streamplot(x, y, f_x, f_y, color=colors, cmap='jet', density=2, linewidth=0.5, arrowstyle='->')
 
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$')

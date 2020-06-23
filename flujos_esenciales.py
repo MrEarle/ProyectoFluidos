@@ -172,3 +172,16 @@ class Doblete(Flujo):
         vx = vr * np.cos(theta) - vt * np.sin(theta)
         vy = vr * np.sin(theta) + vt * np.cos(theta)
         return np.real(vx), np.real(vy)
+
+
+class Custom(Flujo):
+    def __init__(self, funcion, velocidad, rho=1):
+        super().__init__(rho)
+        self._funcion = funcion
+        self._velocidad = velocidad
+
+    def funcion(self, x, y):
+        return self._funcion(x, y)
+
+    def velocidad(self, x, y):
+        return self._velocidad(x, y)
