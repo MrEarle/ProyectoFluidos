@@ -62,12 +62,13 @@ class Composite(Flujo):
     def __init__(self, flujos, escala=1, rho=1):
         super().__init__(rho)
         self.flujos = flujos
+        self.escala = escala
 
     def funcion(self, x, y):
         res = np.full(x.shape, 0j)
         for flujo in self.flujos:
             res += flujo.funcion(x, y)
-        return res
+        return self.escala * res
 
     def velocidad(self, x, y):
         v_x = np.zeros(x.shape)
@@ -76,7 +77,7 @@ class Composite(Flujo):
             v_x_i, v_y_i = flujo.velocidad(x, y)
             v_x += v_x_i
             v_y += v_y_i
-        return v_x, v_y
+        return self.escala * v_x, self.escala * v_y
 
 
 class Uniform(Flujo):
