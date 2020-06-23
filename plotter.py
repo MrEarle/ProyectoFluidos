@@ -33,15 +33,19 @@ def campo_de_velocidades(x_lim, y_lim, flujo: Flujo):
 
 
 def contour(x, y, z, title='', units=None):
+    z[z < -1000000] = -1000000
     levels = np.linspace(np.min(z), np.max(z), 20)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
 
     cp = ax.contourf(x, y, z, cmap='jet', levels=levels)
-    clb = fig.colorbar(cp)  # Add a colorbar to a plot
-    if units is not None:
-        clb.ax.set_title(units)
+    try:
+        clb = fig.colorbar(cp)  # Add a colorbar to a plot
+        if units is not None:
+            clb.ax.set_title(units)
+    except Exception:
+        pass
 
     ax.set_xlabel('$x$')
     ax.set_ylabel('$y$')
@@ -64,8 +68,8 @@ def lineas_de_corriente(x_lim, y_lim, flujo: Flujo):
 
 
 def lineas_de_potencial(x_lim, y_lim, flujo: Flujo):
-    nx = 5 * (x_lim[1] - x_lim[0])
-    ny = 5 * (y_lim[1] - y_lim[0])
+    nx = 100
+    ny = 100
     x = np.linspace(*x_lim, nx)
     y = np.linspace(*y_lim, ny)
 
@@ -77,8 +81,8 @@ def lineas_de_potencial(x_lim, y_lim, flujo: Flujo):
 
 
 def campo_de_presiones(x_lim, y_lim, flujo: Flujo):
-    nx = 5 * (x_lim[1] - x_lim[0])
-    ny = 5 * (y_lim[1] - y_lim[0])
+    nx = 100
+    ny = 100
     x = np.linspace(*x_lim, nx)
     y = np.linspace(*y_lim, ny)
 

@@ -7,7 +7,14 @@ from abc import ABC, abstractmethod
 class Flujo(ABC):
     def __init__(self, rho):
         self.initial_condition = None
-        self.rho = rho
+        self._rho = rho
+
+    @property
+    def rho(self):
+        return self._rho
+
+    def set_rho(self, rho):
+        self._rho = rho
 
     def set_initial_conditions(self, x0, y0, P0):
         vx0, vy0 = self.velocidad(np.array([[x0]]), np.array([[y0]]))
@@ -30,7 +37,7 @@ class Flujo(ABC):
         (v0_x, v0_y), P0 = self.initial_condition
         v_x, v_y = self.velocidad(x, y)
 
-        return P0 + (self.rho / 2) * (np.hypot(v0_x, v0_y) ** 2 - np.hypot(v_x, v_y) ** 2)
+        return P0 + (self.rho / 2) * (v0_x ** 2 + v0_y ** 2 - (v_x ** 2 + v_y ** 2))
 
     @abstractmethod
     def velocidad(self, x, y):
@@ -64,6 +71,16 @@ class Composite(Flujo):
         self.flujos = flujos
         self.escala_output = escala_output
         self.escala_input = escala_input
+
+    @property
+    def rho(self):
+        return self._rho
+
+    def set_rho(self, value):
+        self._rho = value
+
+        for flujo in self.flujos:
+            flujo.set_rho(value)
 
     def funcion(self, x, y):
         res = np.full(x.shape, 0j)
@@ -120,13 +137,16 @@ class Fuente(Flujo):
 
     def funcion(self, x, y):
         z = self.escala_input * (x + y * 1j)
-        return self.A * np.log(z - self.z0)
+        result = self.A * np.log(z - self.z0)
+        result[z - self.z0 == 0 + 0j] = -10**10 + 0j
+        return result
 
     def velocidad(self, x, y):
         x = self.escala_input * x
         y = self.escala_input * y
         r, theta = self.cartesian_to_polar(x - np.real(self.z0), y - np.imag(self.z0))
         vr = self.escala_input * self.A / r
+        vr[r == 0] = 0
         vt = 0
 
         vx = vr * np.cos(theta) - vt * np.sin(theta)
