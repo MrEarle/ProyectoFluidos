@@ -108,8 +108,8 @@ class MainScreen:
 
         nx = 64
         ny = 64
-        x = np.linspace(-5, 5, nx)
-        y = np.linspace(-5, 5, ny)
+        x = np.linspace(-10, 10, nx)
+        y = np.linspace(-10, 10, ny)
 
         X, Y = np.meshgrid(x, y)
 
@@ -126,6 +126,8 @@ class MainScreen:
         ax.set_ylabel('$y$')
         ax.set_aspect('equal')
         ax.set_title('Campo de Velocidades')
+        ax.set_xlim((-5, 5))
+        ax.set_ylim((-5, 5))
 
         canvas = FigureCanvasTkAgg(fig, master=frame)
         canvas.draw()
@@ -168,8 +170,8 @@ class MainScreen:
 
         nx = 100
         ny = 100
-        x = np.linspace(-5, 5, nx)
-        y = np.linspace(-5, 5, ny)
+        x = np.linspace(-10, 10, nx)
+        y = np.linspace(-10, 10, ny)
 
         X, Y = np.meshgrid(x, y)
 
@@ -185,12 +187,14 @@ class MainScreen:
         z[z < -1000000] = -1000000
         levels = np.linspace(np.min(z), np.max(z), 20)
 
-        cp = ax.contourf(x, y, z, cmap='jet', levels=levels)
+        cp = ax.contour(x, y, z, cmap='jet', levels=levels)
 
         ax.set_xlabel('$x$')
         ax.set_ylabel('$y$')
         ax.set_aspect('equal')
         ax.set_title(f_type)
+        ax.set_xlim((-5, 5))
+        ax.set_ylim((-5, 5))
 
         canvas = FigureCanvasTkAgg(fig, master=frame)
         canvas.draw()
