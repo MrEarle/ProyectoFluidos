@@ -99,7 +99,7 @@ class Composite(Flujo):
 
 
 class Uniform(Flujo):
-    def __init__(self, A, escala_input=1, direction='x', rho=1):
+    def __init__(self, A, escala_input=1, direction='x', rho=1, x0=None):
         super().__init__(rho)
         self.A = A
         self.escala_input = escala_input
