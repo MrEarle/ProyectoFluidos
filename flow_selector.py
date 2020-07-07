@@ -154,3 +154,69 @@ class FlowSelector:
 
         value.trace('w', onChange)
         return value
+
+
+class InitialConditions:
+    def __init__(self, window, row, col):
+        # Condiciones iniciales en x = -10 ** 5, y = -10 ** 5
+        # por defecto implica presión atmosférica.
+        self.props = {'x0': -10 ** 5, 'y0': -10 ** 5, 'P0': 101300}
+
+        self.frame = Frame(window)
+        self.frame.grid(row=row, column=col)
+
+        self.coord_input()
+
+    def coord_input(self):
+        frame = Frame(self.frame)
+
+        x0 = StringVar(frame)
+        y0 = StringVar(frame)
+        P0 = StringVar(frame)
+        x0.set(str(self.props['x0']))
+        y0.set(str(self.props['y0']))
+        P0.set(str(self.props['P0']))
+
+        x0Entry = Entry(frame, width=10, textvariable=x0)
+        y0Entry = Entry(frame, width=10, textvariable=y0)
+        P0Entry = Entry(frame, width=10, textvariable=P0)
+
+        def onX0Change(*args):
+            try:
+                val = x0.get()
+                if val != '':
+                    self.props['x0'] = float(val)
+            except Exception:
+                messagebox.showerror('Valor incorrecto', 'El valor de x0 debe ser un numero')
+                x0.set(str(self.props['x0']))
+
+        def onP0Change(*args):
+            try:
+                val = P0.get()
+                if val != '':
+                    self.props['P0'] = float(val)
+            except Exception:
+                messagebox.showerror('Valor incorrecto', 'El valor de P0 debe ser un numero')
+                P0.set(str(self.props['P0']))
+
+        def onY0Change(*args):
+            try:
+                val = y0.get()
+                if val != '':
+                    self.props['y0'] = float(val)
+            except Exception:
+                messagebox.showerror('Valor incorrecto', 'El valor de y0 debe ser un numero')
+                y0.set(str(self.props['y0']))
+
+        x0.trace('w', onX0Change)
+        y0.trace('w', onY0Change)
+        P0.trace('w', onP0Change)
+
+        Label(frame, text="Condiciones Iniciales: x0 = ").grid(column=0, row=0)
+        x0Entry.grid(column=1, row=0)
+        Label(frame, text=",  y0 = ").grid(column=2, row=0)
+        y0Entry.grid(column=3, row=0)
+        Label(frame, text=",  P0 = ").grid(column=4, row=0)
+        P0Entry.grid(column=5, row=0)
+
+        frame.grid(column=0, row=0)

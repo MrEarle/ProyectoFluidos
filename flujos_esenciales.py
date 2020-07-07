@@ -1,13 +1,44 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import sympy as sym
 
 from abc import ABC, abstractmethod
+
+sym.init_printing()
 
 
 class Flujo(ABC):
     def __init__(self, rho):
         self.initial_condition = None
         self._rho = rho
+
+    @property
+    def symbolic(self):
+        return sym.Rational(0, 1)
+
+    @property
+    def corriente_symbolic(self):
+        return sym.im(self.symbolic)
+
+    @property
+    def potencial_symbolic(self):
+        return sym.re(self.symbolic)
+
+    @property
+    def velocidad_symbolic(self):
+        v_x = sym.diff(self.potencial_symbolic, sym.Symbol('x', real=True))
+        v_y = sym.diff(self.potencial_symbolic, sym.Symbol('y', real=True))
+        return v_x, v_y
+
+    @property
+    def presion_symbolic(self):
+        if self.initial_condition is None:
+            raise Exception('Initial conditions must be set')
+
+        (v0_x, v0_y), P0 = self.initial_condition
+        v_x, v_y = self.velocidad_symbolic
+
+        return P0 + (self.rho / 2) * (v0_x ** 2 + v0_y ** 2 - (v_x ** 2 + v_y ** 2))
 
     @property
     def rho(self):
@@ -76,6 +107,13 @@ class Composite(Flujo):
     def rho(self):
         return self._rho
 
+    @property
+    def symbolic(self):
+        s = sym.Rational(0, 1)
+        for flujo in self.flujos:
+            s += flujo.symbolic
+        return s
+
     def set_rho(self, value):
         self._rho = value
 
@@ -111,6 +149,11 @@ class Uniform(Flujo):
         elif isinstance(direction, (int, float, complex)):
             self.alpha = complex(direction)
 
+    @property
+    def symbolic(self):
+        z = sym.Symbol('x', real=True) + sym.I * sym.Symbol('y', real=True)
+        return self.A * self.escala_input * z * sym.exp(self.alpha * sym.I)
+
     def funcion(self, x, y):
         z = self.escala_input * (x + y * 1j)
         return self.A * z * np.exp(self.alpha * 1j)
@@ -128,6 +171,12 @@ class Fuente(Flujo):
         self.A = A
         self.z0 = complex(*x0)
         self.escala_input = escala_input
+
+    @property
+    def symbolic(self):
+        z = sym.Symbol('x', real=True) + sym.I * sym.Symbol('y', real=True)
+        z *= self.escala_input
+        return self.A * sym.log(z - self.z0)
 
     def funcion(self, x, y):
         z = self.escala_input * (x + y * 1j)
@@ -155,6 +204,12 @@ class VorticeIrrotacional(Flujo):
         self.z0 = complex(*x0)
         self.escala_input = escala_input
 
+    @property
+    def symbolic(self):
+        z = sym.Symbol('x', real=True) + sym.I * sym.Symbol('y', real=True)
+        z *= self.escala_input
+        return -1j * self.A * sym.log(z - self.z0)
+
     def funcion(self, x, y):
         z = self.escala_input * (x + y * 1j)
         return -1j * self.A * np.log(z - self.z0)
@@ -174,6 +229,12 @@ class Doblete(Flujo):
         self.z0 = complex(*x0)
         self.escala_input = escala_input
 
+    @property
+    def symbolic(self):
+        z = sym.Symbol('x', real=True) + sym.I * sym.Symbol('y', real=True)
+        z *= self.escala_input
+        return self.A / (z - self.z0)
+
     def funcion(self, x, y):
         z = self.escala_input * (x + y * 1j)
         return self.A / (z - self.z0)
@@ -189,10 +250,15 @@ class Doblete(Flujo):
 
 
 class Custom(Flujo):
-    def __init__(self, funcion, velocidad, rho=1):
+    def __init__(self, funcion, velocidad, symbolic=None, rho=1):
         super().__init__(rho)
         self._funcion = funcion
         self._velocidad = velocidad
+        self._symbolic = symbolic
+
+    @property
+    def symbolic(self):
+        return self._symbolic
 
     def funcion(self, x, y):
         return self._funcion(x, y)

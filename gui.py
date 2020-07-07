@@ -8,6 +8,7 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.figure import Figure
 import numpy as np
 from flujos_esenciales import *
+import sympy as sym
 
 flujos = {
     'Uniforme': Uniform,
@@ -26,7 +27,7 @@ class MainScreen:
         self.window = Tk()
 
         self.window.title('Flujos Esenciales')
-        self.window.geometry('1000x500')
+        self.window.geometry('1100x600')
 
         Label(self.window, text="Flow Toolz 5000", font=("Arial", 25)).grid(column=0, row=0)
 
@@ -48,14 +49,66 @@ class MainScreen:
         self.add()
         self.remove()
         self.enterButton()
+        self.show_eq()
 
         self.plotType()
+        self.initConds = flow_selector.InitialConditions(self.window, col=1, row=1)
+
+    def show_eq(self):
+        def onClick(*args):
+            plot_type = self.plot_type.get()
+            flujo = self.getFlow(self.flows[0].props)
+            if len(self.flows) > 1:
+                for f in self.flows[1:]:
+                    flujo += self.getFlow(f.props)
+
+            if plot_type == 'velocidad':
+                s = flujo.velocidad_symbolic
+                base_txt = '\\vec v(x,y)='
+            elif plot_type == 'corriente':
+                s = flujo.corriente_symbolic
+                base_txt = '\\psi(x,y)='
+            elif plot_type == 'potencial':
+                s = flujo.potencial_symbolic
+                base_txt = '\\phi(x,y)='
+            elif plot_type == 'presion':
+                init_conds = self.initConds.props
+                flujo.set_initial_conditions(init_conds['x0'], init_conds['y0'], init_conds['P0'])
+                base_txt = 'P(x,y)='
+                s = flujo.presion_symbolic
+
+            dialog = tkinter.Toplevel()
+            dialog.geometry('1000x500')
+            dialog.title(f'Ecuacion: {plot_type}')
+
+            fig = Figure(figsize=(5, 4), dpi=100)
+            ax = fig.add_subplot(111)
+
+            canvas = FigureCanvasTkAgg(fig, master=dialog)
+            canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
+            canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
+
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+
+            tmptext = base_txt + sym.latex(sym.simplify(s))
+            tmptext = "$"+tmptext+"$"
+
+            ax.clear()
+            ax.text(0, 0.6, tmptext)
+            canvas.draw()
+
+            # tkinter.messagebox.showinfo(title=f'Ecuacion: {plot_type}', message=sym.pretty(s))
+
+        btn = Button(self.buttonFrame, text="Show Equation", command=onClick)
+
+        btn.grid(column=4, row=0)
 
     def plotType(self):
         typeFrame = Frame(self.window)
         typeFrame.grid(column=0, row=1)
         Label(typeFrame, text='Tipo de grafico:').grid(column=0, row=1)
-        popupMenu = OptionMenu(typeFrame, self.plot_type, *['velocidad', 'corriente', 'potencial'])
+        popupMenu = OptionMenu(typeFrame, self.plot_type, *['velocidad', 'corriente', 'potencial', 'presion'])
         popupMenu.grid(column=1, row=1)
 
     def add(self):
@@ -180,6 +233,8 @@ class MainScreen:
         elif f_type == 'corriente':
             z = flujo.corriente(X, Y)
         else:
+            init_conds = self.initConds.props
+            flujo.set_initial_conditions(init_conds['x0'], init_conds['y0'], init_conds['P0'])
             z = flujo.presion(X, Y)
 
         ax = fig.add_subplot(111)
@@ -187,7 +242,7 @@ class MainScreen:
         z[z < -1000000] = -1000000
         levels = np.linspace(np.min(z), np.max(z), 20)
 
-        cp = ax.contour(x, y, z, cmap='jet', levels=levels)
+        ax.contour(x, y, z, cmap='jet', levels=levels)
 
         ax.set_xlabel('$x$')
         ax.set_ylabel('$y$')
