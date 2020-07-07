@@ -112,7 +112,7 @@ class Composite(Flujo):
         s = sym.Rational(0, 1)
         for flujo in self.flujos:
             s += flujo.symbolic
-        return s
+        return self.escala_output * s
 
     def set_rho(self, value):
         self._rho = value
@@ -152,11 +152,11 @@ class Uniform(Flujo):
     @property
     def symbolic(self):
         z = sym.Symbol('x', real=True) + sym.I * sym.Symbol('y', real=True)
-        return self.A * self.escala_input * z * sym.exp(self.alpha * sym.I)
+        return self.A * self.escala_input * z * sym.exp(-self.alpha * sym.I)
 
     def funcion(self, x, y):
         z = self.escala_input * (x + y * 1j)
-        return self.A * z * np.exp(self.alpha * 1j)
+        return self.A * z * np.exp(-self.alpha * 1j)
 
     def velocidad(self, x, y):
         shape = len(x), len(y)
